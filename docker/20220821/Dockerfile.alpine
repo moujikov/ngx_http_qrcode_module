@@ -30,10 +30,11 @@ RUN curl -L "${MODULE_SOURCE}/archive/refs/tags/v${MODULE_VERSION}.tar.gz" -o "v
     CONFARGS=${CONFARGS/-Os -fomit-frame-pointer -g/-Os} && \
     echo $CONFARGS && \
     ./configure --with-compat $CONFARGS --add-dynamic-module=../${MODULE_NAME}/ && \
-    make modules
+    make modules && make && make install
 
 FROM scratch
 
+COPY --from=Builder /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx
 COPY --from=Builder /usr/src/nginx/objs/ngx_http_qrcode_module.so /
 COPY --from=Builder /usr/local/lib/libqrencode.a /usr/local/lib/libqrencode.a
 COPY --from=Builder /usr/local/bin/qrencode /usr/local/bin/qrencode

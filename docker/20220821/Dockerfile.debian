@@ -10,7 +10,7 @@ ARG LIBQRENCODE_SOURCE=https://github.com/fukuchi/libqrencode
 ARG LIBQRENCODE_VERSION=4.1.1
 ARG LIBQRENCODE_CHECKSUM=8d0283fc2d7e6a23d1e5809f4bb406bd32369d36
 
-# RUN sed -i 's/http:\/\/.*.debian.org/http:\/\/mirrors.tuna.tsinghua.edu.cn/' /etc/apt/sources.list
+RUN sed -i 's/http:\/\/.*.debian.org/http:\/\/mirrors.tuna.tsinghua.edu.cn/' /etc/apt/sources.list
 RUN apt update && apt install -y autoconf automake autotools-dev libtool pkg-config libpng-dev cmake
 
 RUN curl -L "${LIBQRENCODE_SOURCE}/archive/refs/tags/v${LIBQRENCODE_VERSION}.tar.gz" -o "v${LIBQRENCODE_VERSION}.tar.gz" && \
@@ -27,10 +27,11 @@ RUN curl -L "${MODULE_SOURCE}/archive/refs/tags/v${MODULE_VERSION}.tar.gz" -o "v
     cd /usr/src/nginx && \
     echo $CONFARGS && \
     ./configure --with-compat $CONFARGS --add-dynamic-module=../${MODULE_NAME}/ && \
-    make modules
+    make modules && make && make install
 
 FROM scratch
 
+COPY --from=Builder /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx
 COPY --from=Builder /usr/src/nginx/objs/ngx_http_qrcode_module.so /
 COPY --from=Builder /usr/local/lib/libqrencode.a /usr/local/lib/libqrencode.a
 COPY --from=Builder /usr/local/bin/qrencode /usr/local/bin/qrencode
