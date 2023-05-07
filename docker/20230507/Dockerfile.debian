@@ -1,0 +1,37 @@
+ARG NGINX_VERSION=1.24.0
+FROM soulteary/prebuilt-nginx-modules:base-${NGINX_VERSION} AS Builder
+
+ARG MODULE_CHECKSUM=60b2e25f86fd7b8aee18856c9d073a8b8153c943
+ARG MODULE_VERSION=2023.05.07
+ARG MODULE_NAME=ngx_http_qrcode_module
+ARG MODULE_SOURCE=https://github.com/soulteary/ngx_http_qrcode_module
+
+ARG LIBQRENCODE_SOURCE=https://github.com/fukuchi/libqrencode
+ARG LIBQRENCODE_VERSION=4.1.1
+ARG LIBQRENCODE_CHECKSUM=8d0283fc2d7e6a23d1e5809f4bb406bd32369d36
+
+RUN sed -i 's/http:\/\/.*.debian.org/http:\/\/mirrors.tuna.tsinghua.edu.cn/' /etc/apt/sources.list
+RUN apt update && apt install -y autoconf automake autotools-dev libtool pkg-config libpng-dev cmake
+
+RUN curl -L "${LIBQRENCODE_SOURCE}/archive/refs/tags/v${LIBQRENCODE_VERSION}.tar.gz" -o "v${LIBQRENCODE_VERSION}.tar.gz" && \
+    echo "${LIBQRENCODE_CHECKSUM}  v${LIBQRENCODE_VERSION}.tar.gz" | shasum -c && \
+    tar -zxC /usr/src -f v${LIBQRENCODE_VERSION}.tar.gz && \
+    cd /usr/src/libqrencode-${LIBQRENCODE_VERSION} && \
+    cmake . && \
+    make && make install
+
+RUN curl -L "${MODULE_SOURCE}/archive/refs/tags/v${MODULE_VERSION}.tar.gz" -o "v${MODULE_VERSION}.tar.gz" && \
+    echo "${MODULE_CHECKSUM}  v${MODULE_VERSION}.tar.gz" | shasum -c && \
+    tar -zxC /usr/src -f v${MODULE_VERSION}.tar.gz && \
+    cd /usr/src && mv ${MODULE_NAME}-${MODULE_VERSION}/src/ ${MODULE_NAME} && \
+    cd /usr/src/nginx && \
+    echo $CONFARGS && \
+    ./configure --with-compat $CONFARGS --add-dynamic-module=../${MODULE_NAME}/ && \
+    make modules && make && make install
+
+FROM scratch
+
+COPY --from=Builder /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx
+COPY --from=Builder /usr/src/nginx/objs/ngx_http_qrcode_module.so /
+COPY --from=Builder /usr/local/lib/libqrencode.a /usr/local/lib/libqrencode.a
+COPY --from=Builder /usr/local/bin/qrencode /usr/local/bin/qrencode
