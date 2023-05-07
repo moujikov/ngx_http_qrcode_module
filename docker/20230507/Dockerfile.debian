@@ -1,7 +1,7 @@
 ARG NGINX_VERSION=1.24.0
 FROM soulteary/prebuilt-nginx-modules:base-${NGINX_VERSION} AS Builder
 
-ARG MODULE_CHECKSUM=60b2e25f86fd7b8aee18856c9d073a8b8153c943
+ARG MODULE_CHECKSUM=67ee40c440ff358f29648e04033949d84c951e90
 ARG MODULE_VERSION=2023.05.07
 ARG MODULE_NAME=ngx_http_qrcode_module
 ARG MODULE_SOURCE=https://github.com/soulteary/ngx_http_qrcode_module
