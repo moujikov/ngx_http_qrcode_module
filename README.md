@@ -1,4 +1,4 @@
-# Docker container with a ready to use Nginx module for QR-codes generation
+## Docker container with a ready to use Nginx module for QR-codes generation
 
 Uses *libqrencode v.4.1.x* by Kentaro Fukuchi (see https://github.com/fukuchi/libqrencode, https://fukuchi.org/works/qrencode).
 
