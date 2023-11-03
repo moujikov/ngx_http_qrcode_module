@@ -1,0 +1,21 @@
+ARG NGINX_VERSION
+ARG PLATFORM
+
+FROM --platform=${PLATFORM} moujikov/nginx-docker-builder:${NGINX_VERSION}-alpine AS Builder
+
+ARG QRENCODE_VERSION
+ARG MODULE_NAME
+
+RUN apk update && apk add --no-cache libqrencode-dev~=${QRENCODE_VERSION}
+
+COPY ./src/ /usr/src/${MODULE_NAME}/
+
+RUN cd /usr/src/nginx && \
+    printf " --with-compat --add-dynamic-module=../${MODULE_NAME}" >> configure.sh && \
+    ./configure.sh && make modules 
+
+#################################################################################
+
+FROM --platform=${PLATFORM} scratch 
+
+COPY --from=Builder /usr/src/nginx/objs/ngx_http_qrcode_module.so /

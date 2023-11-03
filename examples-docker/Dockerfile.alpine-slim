@@ -1,0 +1,8 @@
+FROM --platform=linux/amd64 moujikov/ngx_http_qrcode_module:1.0-ngx-1.25.3-alpine AS Module
+
+FROM --platform=linux/amd64 nginx:1.25.3-alpine-slim
+
+RUN apk update && apk add --no-cache libgd libqrencode~=4.1
+
+COPY --from=Module /ngx_http_qrcode_module.so      /usr/lib/nginx/modules/
+COPY examples-nginx/nginx.conf /etc/nginx/

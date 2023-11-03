@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -a
+    . docker/.env
+set +a
+
+REPO="moujikov/${MODULE_NAME}"
+
+build() {
+    local OS=$1
+    local TAG=${MODULE_VERSION}-ngx-${NGINX_VERSION}
+    if [ ${OS} != "debian" ]; then 
+        TAG+="-${OS}"
+    fi
+
+    local DIST=${REPO}:${TAG}
+
+    echo "Building: ${DIST}"
+    echo "For platform: ${OS} ${PLATFORM}"
+    echo "Using nginx: ${NGINX_VERSION}, qrencode: ${QRENCODE_VERSION}"
+
+    local BUILD_ARGS=$(cat docker/.env | sed '/^[[:space:]]*$/d' | tr '\n' ';' | \
+                       sed 's/;$//' | sed 's/^/ --build-arg /' | sed 's/;/ --build-arg /g' )
+
+    docker build ${BUILD_ARGS} --tag ${DIST} -f "docker/Dockerfile.${OS}" .
+}
+
+if [ -n "$1" ]; then
+    build $1 
+else
+    for file in docker/Dockerfile.*; do
+        build ${file##*/Dockerfile.}
+    done
+fi
